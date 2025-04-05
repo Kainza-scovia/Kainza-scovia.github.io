@@ -1,4 +1,3 @@
-            
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -415,6 +414,32 @@
             padding-top: 10px;
             border-top: 2px solid var(--accent);
         }
+        
+        /* Remove button */
+        .remove-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        
+        .remove-btn:hover {
+            background: #d32f2f;
+        }
+        
+        .order-item-controls {
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -676,7 +701,7 @@
             
             <div style="margin-top: 20px; display: flex; justify-content: space-between;">
                 <button class="modal-btn" onclick="closeSummaryModal()" style="background: #666;">
-                    <i class="fas fa-arrow-left"></i> Back
+                    Back
                 </button>
                 <button class="modal-btn" onclick="confirmOrder()">
                     Confirm <i class="fas fa-check"></i>
@@ -736,6 +761,19 @@
             }, 1000);
         }
 
+        // Remove from cart
+        function removeFromCart(index) {
+            const removedItem = cart.splice(index, 1)[0];
+            total -= removedItem.price;
+            updateCart();
+            showNotification(`${removedItem.name} removed from cart`);
+            
+            // Update the order summary if it's open
+            if (document.getElementById('summaryModal').classList.contains('show')) {
+                showSummaryModal();
+            }
+        }
+
         // Update cart display
         function updateCart() {
             document.getElementById('cartCount').textContent = cart.length;
@@ -762,13 +800,22 @@
             // Clear previous items
             orderSummary.innerHTML = '';
             
+            if (cart.length === 0) {
+                orderSummary.innerHTML = '<p>Your cart is empty</p>';
+                modal.classList.add('show');
+                return;
+            }
+            
             // Add current items to summary
-            cart.forEach(item => {
+            cart.forEach((item, index) => {
                 const orderItem = document.createElement('div');
                 orderItem.className = 'order-item';
                 orderItem.innerHTML = `
                     <div class="order-item-name">${item.name}</div>
                     <div class="order-item-price">${item.price.toFixed(2)}MZN</div>
+                    <div class="order-item-controls">
+                        <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
+                    </div>
                 `;
                 orderSummary.appendChild(orderItem);
             });
@@ -805,6 +852,11 @@
         
         // Confirm order (after seeing summary)
         function confirmOrder() {
+            if (cart.length === 0) {
+                showNotification('Your cart is empty!');
+                return;
+            }
+            
             // Store the current order before clearing cart
             currentOrder = [...cart];
             
